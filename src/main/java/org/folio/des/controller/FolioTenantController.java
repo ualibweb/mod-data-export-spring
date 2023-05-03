@@ -39,6 +39,7 @@ import org.folio.des.scheduling.acquisition.EdifactScheduledJobInitializer;
 import org.folio.des.service.JobService;
 import org.folio.des.service.bursarlegacy.BursarExportLegacyJobService;
 import org.folio.des.service.config.BulkEditConfigService;
+import org.folio.des.util.LegacyBursarMigrationUtil;
 import org.folio.spring.controller.TenantController;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -108,21 +109,6 @@ public class FolioTenantController extends TenantController {
     return tenantInit;
   }
 
-  private boolean isLegacyJob(LegacyJob job) {
-    LegacyBursarFeeFines bursarFeeFines = job
-      .getExportTypeSpecificParameters()
-      .getBursarFeeFines();
-
-    return !(
-      bursarFeeFines.getPatronGroups().size() == 0 &&
-      bursarFeeFines.getTypeMappings() == null &&
-      bursarFeeFines.getDaysOutstanding() == null &&
-      bursarFeeFines.getTransferAccountId() == null &&
-      bursarFeeFines.getFeefineOwnerId() == null &&
-      bursarFeeFines.getServicePointId() == null
-    );
-  }
-
   public void recreateLegacyJobs() {
     log.info("searching for legacy jobs");
     LegacyJobCollection response = bursarExportLegacyJobService.get(
@@ -146,7 +132,7 @@ public class FolioTenantController extends TenantController {
 
     for (LegacyJob legacyJob : jobsToRecreate) {
       log.info("job to recreate: {}", legacyJob);
-      if (isLegacyJob(legacyJob)) {
+      if (LegacyBursarMigrationUtil.isLegacyJob(legacyJob)) {
         ExportTypeSpecificParameters newExportTypeSpecificParams = new ExportTypeSpecificParameters();
         newExportTypeSpecificParams.setVendorEdiOrdersExportConfig(
           legacyJob
